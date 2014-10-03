@@ -305,7 +305,11 @@ def map_window_properties(properties):
     for key in properties:
         short_key = re.match(r".*\('(.*)'\).*", str(key))  # is there a better
         # way to access keys that are instances?
-        p[str(short_key.group(1))] = properties[key]
+        p[str(short_key.group(1))] = str(properties[key])
+
+    p['posn'] = eval(p['posn'])
+    p['ptsz'] = eval(p['ptsz'])
+
     return p
 
 
