@@ -562,6 +562,20 @@ def pause(amount):
     time.sleep(amount / 1000.)
 
 
+def bring_app(window_title):
+    '''Returns the window id and title of the active window.'''
+
+    print "Bringing app %s" % window_title
+
+    script = applescript.AppleScript('''
+        tell application "{window_title}"
+            reopen
+            activate
+        end tell
+    '''.format(window_title=window_title))
+    script.run()
+
+
 def server_info():
     return _SERVER_INFO
 
@@ -575,6 +589,7 @@ def list_rpc_commands():
         'move_mouse': move_mouse,
         'server_info': server_info,
         'pause': pause,
+        'bring_app': bring_app
         }
     return _RPC_COMMANDS
 

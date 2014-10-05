@@ -223,9 +223,24 @@ class ProxyMousePhantomClick(ProxyMouse):
         return [move]
 
 
+
+###############################################################################
+# BringApp
+
+
+class ProxyBringApp(ProxyBase, dragonfly.DynStrActionBase):
+    def _parse_spec(self, spec):
+        return spec
+
+    def _execute_events(self, cmd):
+        print "Starting app %s" % cmd
+        aenea.communications.server.bring_app(window_title=cmd)
+
+
 __all__ = [
     'ProxyKey',
     'ProxyText',
     'ProxyMouse',
-    'ProxyMousePhantomClick'
+    'ProxyMousePhantomClick',
+    'ProxyBringApp'
     ]

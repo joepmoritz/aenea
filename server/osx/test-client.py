@@ -103,6 +103,9 @@ def test_multiple_actions(distobj):
     distobj.execute_batch(batch._commands)
 
 
+def test_bringapp(distobj):
+    distobj.bring_app(window_title='Chrome')
+
 def all_tests(distobj):
     test_key_press(distobj)
     test_write_text(distobj)
@@ -110,6 +113,7 @@ def all_tests(distobj):
     test_move_mouse(distobj)
     test_mouse_drag(distobj)
     test_pause(distobj)
+    test_bringapp(distobj)
     distobj.key_press(key='escape')
     distobj.get_context()
 
