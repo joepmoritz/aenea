@@ -28,7 +28,7 @@ import jsonrpclib.SimpleJSONRPCServer
 import config
 import logging
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 import applescript
 from Quartz.CoreGraphics import *
@@ -310,7 +310,6 @@ def map_window_properties(properties):
     p2 = {}
     p2['posn'] = eval(str(p['posn']))
     p2['ptsz'] = eval(str(p['ptsz']))
-    p2['subtitle'] = p['titl'].encode('utf-8')
 
     return p2
 
@@ -343,12 +342,6 @@ def get_window_properties(window_id=None):
     p = map_window_properties(properties)
     return p
 
-def transform_relative_mouse_event(event):
-    geo = get_geometry()
-    dx, dy = map(int, map(float, event.split()))
-    return [('mousemove', '%i %i' % (geo['x'] + dx, geo['y'] + dy))]
-
-
 def get_context():
     '''return a dictionary of window properties for the currently active
        window. it is fine to include platform specific information, but
@@ -377,7 +370,7 @@ def get_context():
                     properties[key] = str(properties[key])
                 break
 
-    logging.debug(properties)
+    # logging.debug(properties)
 
     return properties
 
@@ -395,9 +388,9 @@ def key_press(
        'meta', and 'flag' (same as super). count is number of times to
        press it. count_delay delay in ms between presses.'''
 
-    logging.debug("\nkey = {key} modifiers = {modifiers} " +
+    logging.debug(("key = {key} modifiers = {modifiers} " +
                   "direction = {direction} " +
-                  "count = {count} count_delay = {count_delay} ".
+                  "count = {count} count_delay = {count_delay} ").
                   format(modifiers=modifiers,
                          direction=direction,
                          count=count,
@@ -413,7 +406,6 @@ def key_press(
         modifiers = [modifiers]
 
     modifiers = [_MOD_TRANSLATION.get(mod, mod) for mod in modifiers]
-    logging.debug("modifiers = %s" % modifiers)
 
     key_to_press = _MODIFIER_KEY_DIRECT.get(key.lower(), None)
     if key_to_press:
@@ -487,12 +479,13 @@ def trigger_mouseclick(button, direction, posx, posy, clickCount=1):
         }
 
     if button == 4 or button == 5:
-        yScroll = -10 if button == 5 else 10  # wheeldown -, wheelup +
+        yScroll = -1 if button == 5 else 1  # wheeldown -, wheelup +
         theEvent = CGEventCreateScrollWheelEvent(
             None, kCGScrollEventUnitLine, 1, yScroll)
 
-        for _ in xrange(clickCount):
+        for _ in xrange(clickCount * 10):
             CGEventPost(kCGHIDEventTap, theEvent)
+            time.sleep(0.03 / clickCount)
     elif direction == 'click':
         theEvent = CGEventCreateMouseEvent(
             None, click_mapping[button][0], (posx, posy), kCGMouseButtonLeft)
@@ -515,7 +508,7 @@ def click_mouse(
     '''click the mouse button specified. button maybe one of 'right',
        'left', 'middle', 'wheeldown', 'wheelup'.'''
 
-    logging.debug("button = "+button)
+    logging.debug("mouse click, button = "+button)
     if count_delay is None or count < 2:
         delay = 0
     else:
@@ -525,8 +518,6 @@ def click_mouse(
         button = _MOUSE_BUTTONS[button]
     except KeyError:
         button = int(button)
-
-    logging.debug('_MOUSE_CLICKS[direction]' + _MOUSE_CLICKS[direction])
 
     ourEvent = CGEventCreate(None)
     currentpos = CGEventGetLocation(ourEvent)  # Save current mouse position
@@ -553,7 +544,11 @@ def move_mouse(
         x = geo['width'] * x
         y = geo['height'] * y
 
-    mousemove(x, y)
+    if reference == 'relative_active':
+    	x = x + geo['x']
+    	y = y + geo['y']
+
+    mousemove(x,y)
 
     if phantom is not None:
         trigger_mouseclick(1, 'click', x, y, 1)
@@ -612,7 +607,7 @@ def multiple_actions(actions):
 
 def setup_server(host, port):
     print "started on host = %s port = %s " % (host, port)
-    server = jsonrpclib.SimpleJSONRPCServer.SimpleJSONRPCServer((host, port))
+    server = jsonrpclib.SimpleJSONRPCServer.SimpleJSONRPCServer((host, port), logRequests=False)
 
     for command in list_rpc_commands():
         server.register_function(globals()[command])
