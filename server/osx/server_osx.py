@@ -305,12 +305,14 @@ def map_window_properties(properties):
     for key in properties:
         short_key = re.match(r".*\('(.*)'\).*", str(key))  # is there a better
         # way to access keys that are instances?
-        p[str(short_key.group(1))] = str(properties[key])
+        p[str(short_key.group(1))] = properties[key]
 
-    p['posn'] = eval(p['posn'])
-    p['ptsz'] = eval(p['ptsz'])
+    p2 = {}
+    p2['posn'] = eval(str(p['posn']))
+    p2['ptsz'] = eval(str(p['ptsz']))
+    p2['subtitle'] = p['titl'].encode('utf-8')
 
-    return p
+    return p2
 
 
 def get_geometry(window_id=None):
