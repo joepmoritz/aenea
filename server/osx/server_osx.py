@@ -479,11 +479,36 @@ def trigger_mouseclick(button, direction, posx, posy, clickCount=1):
         }
 
     if button == 4 or button == 5:
+
+    	# Move mouse inside main window area if needed
+    	ourEvent = CGEventCreate(None)
+    	currentpos = CGEventGetLocation(ourEvent)  # Save current mouse position
+    	newPos = currentpos
+    	needMove = False
+    	geo = get_geometry()
+
+    	if currentpos.x < geo['x']:
+    		newPos.x = geo['x'] + 25
+    		needMove = True
+    	if currentpos.x > geo['x'] + geo['width']:
+    		newPos.x = geo['x'] + geo['width'] - 25
+    		needMove = True
+    	if currentpos.y < geo['y']:
+    		newPos.y = geo['y'] + 100
+    		needMove = True
+    	if currentpos.y > geo['y'] + geo['height']:
+    		newPos.y = geo['y'] + geo['height'] - 100
+    		needMove = True
+
+    	if needMove:
+    		mousemove(newPos.x, newPos.y)
+    		time.sleep(0.05)
+
         yScroll = -1 if button == 5 else 1  # wheeldown -, wheelup +
         theEvent = CGEventCreateScrollWheelEvent(
             None, kCGScrollEventUnitLine, 1, yScroll)
 
-        for _ in xrange(clickCount * 10):
+        for _ in xrange(clickCount * 5):
             CGEventPost(kCGHIDEventTap, theEvent)
             time.sleep(0.03 / clickCount)
     elif direction == 'click':
