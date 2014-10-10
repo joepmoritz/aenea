@@ -74,9 +74,10 @@ _SERVER_INFO = {
 
 
 _MOD_TRANSLATION = {
-    'alt': 'alt',
+    'alt': 'option',
     'shift': 'shift',
     'control': 'control',
+    'ctrl': 'control',
     'super': 'command',
     'command': 'command'
     }
@@ -98,7 +99,7 @@ _QUOTED_KEY_TRANSLATION = {
     'comma': ',',
     'dollar': '$',
     'dot': '.',
-    'dquote': '"',
+    'dquote': '\\"',
     'equal': '=',
     'exclamation': '!',
     'hash': '#',
@@ -504,13 +505,20 @@ def trigger_mouseclick(button, direction, posx, posy, clickCount=1):
     		mousemove(newPos.x, newPos.y)
     		time.sleep(0.05)
 
+    	speed = 2
+    	window_id, window_title = get_active_window()
+    	if 'Sublime' in window_id:
+    		speed = 4
+
         yScroll = -1 if button == 5 else 1  # wheeldown -, wheelup +
+        yScroll *= speed
         theEvent = CGEventCreateScrollWheelEvent(
             None, kCGScrollEventUnitLine, 1, yScroll)
 
-        for _ in xrange(clickCount * 5):
+        for _ in xrange(clickCount * 4):
             CGEventPost(kCGHIDEventTap, theEvent)
             time.sleep(0.03 / clickCount)
+
     elif direction == 'click':
         theEvent = CGEventCreateMouseEvent(
             None, click_mapping[button][0], (posx, posy), kCGMouseButtonLeft)
