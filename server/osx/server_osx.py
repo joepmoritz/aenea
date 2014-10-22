@@ -27,11 +27,18 @@ import jsonrpclib.SimpleJSONRPCServer
 
 import config
 import logging
+from pprint import pprint
 
 logging.basicConfig(level=logging.DEBUG)
 
 import applescript
 from Quartz.CoreGraphics import *
+
+from AppKit import NSPasteboard, NSArray
+
+
+
+
 
 _MOUSE_BUTTONS = {
     'left': 1,
@@ -91,7 +98,7 @@ _QUOTED_KEY_TRANSLATION = {
     'apostrophe': "'",
     'asterisk': '*',
     'at': '@',
-    'backslash': '\\',
+    'backslash': '\\\\',
     'backtick': '`',
     'bar': '-',
     'caret': '^',
@@ -453,10 +460,24 @@ def write_text(text, paste=False):
 
     logging.debug("text = %s paste = %s" % (text, paste))
     if text:
-        # copy the pasted text to the clipboard
-        write_command(text, arguments='', executable='pbcopy')
+        # get current clipboard contents
+        pb = NSPasteboard.generalPasteboard()
+        classes = NSArray.arrayWithObject_(objc.lookUpClass('NSString'))
+        options = NSDictionary.dictionary()
+        items = NSArray(pb.readObjectsForClasses_options_(classes, options))
+
+        # copy our text to clipboard
+        a = NSArray.arrayWithObject_(text)
+        pb.clearContents()
+        pb.writeObjects_(a)
+
         # paste
         key_press('v', 'super')
+        pause(100)
+
+        # return original text to clipboard
+        pb.clearContents()
+        pb.writeObjects_(items)
 
 
 def mouseEvent(type, posx, posy, clickCount=1):
@@ -509,6 +530,8 @@ def trigger_mouseclick(button, direction, posx, posy, clickCount=1):
     	window_id, window_title = get_active_window()
     	if 'Sublime' in window_id:
     		speed = 4
+        elif 'Preview' in window_id:
+            speed = 10
 
         yScroll = -1 if button == 5 else 1  # wheeldown -, wheelup +
         yScroll *= speed
@@ -649,6 +672,7 @@ def setup_server(host, port):
     return server
 
 
+
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[-1] == 'getcontext':
         ctx = get_context()
@@ -680,3 +704,6 @@ if __name__ == '__main__':
                 os._exit(0)
     server = setup_server(config.HOST, config.PORT)
     server.serve_forever()
+
+
+
