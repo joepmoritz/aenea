@@ -161,20 +161,25 @@ def make_grammar_commands(module_name, mapping, config_key='commands', alias = A
        constructs a mapping that takes user config, if specified, into account.
        config_key may be a key in the JSON to use (for modules with multiple
        mapping rules.) If a user phrase starts with !,
-       no mapping is generated for that phrase.'''
+       no mapping is generated for that phrase.
+       If a user phrase starts with +, an alternative mapping is generated.'''
     conf_path = ('grammar_config', module_name)
     conf = ConfigWatcher(conf_path).conf.get(config_key, {})
     commands = mapping.copy()
 
-    # Nuke the default if the user sets one or more aliases.
-    for default_phrase in set(conf.itervalues()):
-        del commands[str(default_phrase)]
+    # Nuke the default if the user sets one or more aliases, and not uses +
+    for (user_phrase, default_phrase) in conf.iteritems():
+        if not user_phrase.startswith('+'):
+            del commands[str(default_phrase)]
 
     for (user_phrase, default_phrase) in conf.iteritems():
         # Dragonfly chokes on unicode, JSON's default.
         user_phrase = str(user_phrase)
         default_phrase = str(default_phrase)
         assert default_phrase in mapping, ('Invalid mapping value in module %s config_key %s: %s' % (module_name, config_key, default_phrase))
+
+        if user_phrase.startswith('+'):
+            user_phrase = user_phrase[1:]
 
         # Allow users to nuke a command with !
         if not user_phrase.startswith('!'):
