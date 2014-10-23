@@ -100,7 +100,7 @@ _QUOTED_KEY_TRANSLATION = {
     'at': '@',
     'backslash': '\\\\',
     'backtick': '`',
-    'bar': '-',
+    'bar': '|',
     'caret': '^',
     'colon': ':',
     'comma': ',',
