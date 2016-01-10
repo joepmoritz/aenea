@@ -92,7 +92,7 @@ DIGITS = configuration.make_grammar_commands('misc', {
     'six': '6',
     'seven': '7',
     'eight': '8',
-    'niner': '9'
+    'nine': '9'
     }, 'digits')
 
 LETTERS = LOWERCASE_LETTERS.copy()
