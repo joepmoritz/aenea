@@ -509,16 +509,16 @@ def trigger_mouseclick(button, direction, posx, posy, clickCount=1):
     	needMove = False
     	geo = get_geometry()
 
-    	if currentpos.x < geo['x']:
+    	if currentpos.x < geo['x'] + 25:
     		newPos.x = geo['x'] + 25
     		needMove = True
-    	if currentpos.x > geo['x'] + geo['width']:
+    	if currentpos.x > geo['x'] + geo['width'] - 25:
     		newPos.x = geo['x'] + geo['width'] - 25
     		needMove = True
-    	if currentpos.y < geo['y']:
+    	if currentpos.y < geo['y'] + 100:
     		newPos.y = geo['y'] + 100
     		needMove = True
-    	if currentpos.y > geo['y'] + geo['height']:
+    	if currentpos.y > geo['y'] + geo['height'] - 100:
     		newPos.y = geo['y'] + geo['height'] - 100
     		needMove = True
 
