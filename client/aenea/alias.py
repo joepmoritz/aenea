@@ -128,7 +128,7 @@ class Alias(object):
 
     def _update_regex(self):
         if not self._regex:
-            self._regex = re.compile(r"(?:^|[ \[\(])(?P<string>" + r"|".join(sorted(self.strings(), key = lambda s: (len(s.split()), s), reverse = True)) + r")(?:$|[ \]\)])")
+            self._regex = re.compile(r"(?:^| )(?P<string>" + r"|".join(sorted(self.strings(), key = lambda s: (len(s.split()), s), reverse = True)) + r")(?:$| )")
 
     def spec_for_word(self, word):
         if word in self:
