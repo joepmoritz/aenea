@@ -95,12 +95,51 @@ DIGITS = configuration.make_grammar_commands('misc', {
     'nine': '9'
     }, 'digits')
 
+SYMBOLS = configuration.make_grammar_commands('misc', {
+    "ampersand": "ampersand",
+    "slash": "slash",
+    "at": "at",
+    "backslash": "backslash",
+    "backtick": "backtick",
+    "exclamation | bang | not": "exclamation",
+    "bar": "bar",
+    "plus": "plus",
+    "dollar": "dollar",
+    "dot": "dot",
+    "comma": "comma",
+    "equal": "equal",
+    "caret": "caret",
+    "minus | hyphen | dash": "hyphen",
+    "percent": "percent",
+    "hash | pound": "hash",
+    "question [mark] | quest": "question",
+    "double quote | quote": "dquote",
+    "underscore | under": "underscore",
+    "semicolon | semi": "semicolon",
+    "single quote | smote": "squote",
+    "asterisk | star": "asterisk",
+    "tilde": "tilde",
+    "colon": "colon",
+    "right parenthesis | right parents | rarents | right pars | rars": "rparen",
+    "left parenthesis | left parents | larents | left pars | lars | pars | parents": "lparen",
+    "left brace | brace | lace": "lbrace",
+    "right brace | race": "rbrace",
+    "right bracket | racket": "rbracket",
+    "left bracket | lacket | bracket": "lbracket",
+    "left angle | angle | langle": "langle",
+    "right angle | rangle": "rangle",
+    }, 'symbols')
+
+
+
 LETTERS = LOWERCASE_LETTERS.copy()
 LETTERS.update(UPPERCASE_LETTERS)
 
 ALPHANUMERIC = LETTERS.copy()
 ALPHANUMERIC.update(DIGITS)
 
+CHARACTERS = ALPHANUMERIC.copy()
+CHARACTERS.update(SYMBOLS)
 
 class DigitalInteger(dragonfly.Repetition):
     '''An integer element spelled digit by digit (eg, enter 50 by saying
