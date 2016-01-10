@@ -473,7 +473,7 @@ def write_text(text, paste=False):
 
         # paste
         key_press('v', 'super')
-        pause(100)
+        pause(500)
 
         # return original text to clipboard
         pb.clearContents()
