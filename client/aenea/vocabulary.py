@@ -271,8 +271,9 @@ def inhibit_global_dynamic_vocabulary(grammar_name, tag, context=None):
     global _vocabulary_inhibitions
     if isinstance(tag, basestring):
         _vocabulary_inhibitions.setdefault(tag, [])
-        _vocabulary_inhibitions[tag].append((context, grammar_name))
-        _rebuild_lists('dynamic')
+        if (context, grammar_name) not in _vocabulary_inhibitions[tag]:
+            _vocabulary_inhibitions[tag].append((context, grammar_name))
+            _rebuild_lists('dynamic')
     else:
         for t in tag:
             inhibit_global_dynamic_vocabulary(grammar_name, t, context)
