@@ -25,62 +25,36 @@ except ImportError:
 import configuration
 
 LOWERCASE_LETTERS = configuration.make_grammar_commands('misc', {
-    'alpha': 'a',
-    'bravo': 'b',
-    'charlie': 'c',
-    'delta': 'd',
-    'echo': 'e',
-    'foxtrot': 'f',
-    'golf': 'g',
-    'hotel': 'h',
-    'indigo': 'i',
-    'juliet': 'j',
+    'arch': 'a',
+    'broth': 'b',
+    'chimp': 'c',
+    'dell': 'd',
+    'etch': 'e',
+    'fomp': 'f',
+    'goof': 'g',
+    'hark': 'h',
+    'ice': 'i',
+    'jinx': 'j',
     'kilo': 'k',
     'lima': 'l',
     'mike': 'm',
-    'november': 'n',
-    'oscar': 'o',
-    'poppa': 'p',
+    'nerb': 'n',
+    'ork': 'o',
+    'pooch': 'p',
     'quiche': 'q',
-    'romeo': 'r',
-    'sierra': 's',
-    'tango': 't',
-    'uniform': 'u',
-    'victor': 'v',
-    'whiskey': 'w',
-    'x-ray': 'x',
-    'yankee': 'y',
-    'zulu': 'z'
+    'rosh': 'r',
+    'souk': 's',
+    'teek': 't',
+    'unks': 'u',
+    'verge': 'v',
+    'womp': 'w',
+    'trex': 'x',
+    'yang': 'y',
+    'zooch': 'z'
     }, 'letters.lower')
 
-UPPERCASE_LETTERS = configuration.make_grammar_commands('misc', {
-    'upper alpha': 'A',
-    'upper bravo': 'B',
-    'upper charlie': 'C',
-    'upper delta': 'D',
-    'upper echo': 'E',
-    'upper foxtrot': 'F',
-    'upper golf': 'G',
-    'upper hotel': 'H',
-    'upper indigo': 'I',
-    'upper juliet': 'J',
-    'upper kilo': 'K',
-    'upper lima': 'L',
-    'upper mike': 'M',
-    'upper november': 'N',
-    'upper oscar': 'O',
-    'upper poppa': 'P',
-    'upper quiche': 'Q',
-    'upper romeo': 'R',
-    'upper sierra': 'S',
-    'upper tango': 'T',
-    'upper uniform': 'U',
-    'upper victor': 'V',
-    'upper whiskey': 'W',
-    'upper x-ray': 'X',
-    'upper yankee': 'y',
-    'upper zulu': 'Z'
-    }, 'letters.upper')
+
+UPPERCASE_LETTERS = dict(('cap ' + key, value.upper()) for (key, value) in LOWERCASE_LETTERS.iteritems())
 
 DIGITS = configuration.make_grammar_commands('misc', {
     'zero': '0',
@@ -97,48 +71,52 @@ DIGITS = configuration.make_grammar_commands('misc', {
 
 SYMBOLS = configuration.make_grammar_commands('misc', {
     "ampersand": "ampersand",
-    "slash": "slash",
-    "at": "at",
+    "(slash | divided [by])": "slash",
+    "at sign": "at",
     "backslash": "backslash",
     "backtick": "backtick",
-    "exclamation | bang | not": "exclamation",
-    "bar": "bar",
+    "exclamation | bang": "exclamation",
+    "pipe": "bar",
     "plus": "plus",
     "dollar": "dollar",
     "dot": "dot",
     "comma": "comma",
-    "equal": "equal",
+    "eke": "equal",
     "caret": "caret",
-    "minus | hyphen | dash": "hyphen",
-    "percent": "percent",
+    "minus | dash": "hyphen",
+    "percy": "percent",
     "hash | pound": "hash",
     "question [mark] | quest": "question",
     "double quote | quote": "dquote",
     "underscore | under": "underscore",
     "semicolon | semi": "semicolon",
     "single quote | smote": "squote",
-    "asterisk | star": "asterisk",
+    "asterisk | star | times": "asterisk",
     "tilde": "tilde",
     "colon": "colon",
-    "right parenthesis | right parents | rarents | right pars | rars": "rparen",
-    "left parenthesis | left parents | larents | left pars | lars | pars | parents": "lparen",
-    "left brace | brace | lace": "lbrace",
-    "right brace | race": "rbrace",
-    "right bracket | racket": "rbracket",
-    "left bracket | lacket | bracket": "lbracket",
+    "right parenthesis | right parents | right pars": "rparen",
+    "left parenthesis | left parents | left pars | pars | parents": "lparen",
+    "left brace | brace": "lbrace",
+    "right brace": "rbrace",
+    "left bracket | bracket": "lbracket",
+    "right bracket": "rbracket",
     "left angle | angle | langle": "langle",
     "right angle | rangle": "rangle",
     }, 'symbols')
 
 
 
+ALPHANUMERIC = LOWERCASE_LETTERS.copy()
+ALPHANUMERIC.update(DIGITS)
+
+
 LETTERS = LOWERCASE_LETTERS.copy()
 LETTERS.update(UPPERCASE_LETTERS)
 
-ALPHANUMERIC = LETTERS.copy()
-ALPHANUMERIC.update(DIGITS)
+ALPHANUMERIC_WITH_CAPS = LETTERS.copy()
+ALPHANUMERIC_WITH_CAPS.update(DIGITS)
 
-CHARACTERS = ALPHANUMERIC.copy()
+CHARACTERS = ALPHANUMERIC_WITH_CAPS.copy()
 CHARACTERS.update(SYMBOLS)
 
 class DigitalInteger(dragonfly.Repetition):

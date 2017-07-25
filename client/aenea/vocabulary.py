@@ -28,6 +28,7 @@ from aenea.lax import (
 from wrappers import NoAction
 
 from aenea.proxy_actions import ProxyMousePhantomClick as MousePhantomClick
+import aenea.proxy_contexts
 
 try:
     import dragonfly
@@ -93,6 +94,8 @@ _watchers = {
     }
 
 _enabled_watcher = aenea.configuration.ConfigWatcher(('vocabulary_config', 'enabled'))
+
+_extension_tags = {}
 
 
 def refresh_vocabulary(force_reload=False):
@@ -165,6 +168,10 @@ def _rebuild_lists(vocabulary):
         if dlist:
             dlist.clear()
     win = aenea.config.get_window_foreground()
+    context = aenea.proxy_contexts._get_context()
+    has_any_extension_tag = False
+    has_correct_extension_tag = False
+
     for name, vocabs in _vocabulary[vocabulary].iteritems():
         for (tags, vocab) in vocabs:
             if name not in _disabled_vocabularies:
@@ -178,12 +185,24 @@ def _rebuild_lists(vocabulary):
                     if not global_inhibited:
                         _global_list.update(vocab)
 
+                has_any_extension_tag = any([tag in _extension_tags for tag in tags])
+                has_correct_extension_tag = any([
+                    extension_tag.lower() in context['title'].lower()
+                    for tag in tags if tag in _extension_tags
+                    for extension_tag in _extension_tags[tag]
+                ])
+
+                if has_any_extension_tag and not has_correct_extension_tag:
+                    # print('Vocab %s does not have correct extension given %s' % (name, context['title'].lower()))
+                    break
+
                 for tag in tags:
                     if vocabulary == 'static':
                         _lists[vocabulary].setdefault(tag, {})
                     # If it's dynamic, we'll build the list on
                     # demand when someone registers it, so do
                     # nothing here.
+                    # print('Loading vocab %s for tag %s' % (name, tag))
                     if tag in _lists[vocabulary]:
                         _lists[vocabulary][tag].update(vocab)
 
@@ -305,6 +324,9 @@ def unregister_list_of_dynamic_vocabularies():
     global _list_of_dynamic_vocabularies
     _list_of_dynamic_vocabularies = None
 
+def add_extension_tag(extension, tag):
+    _extension_tags.setdefault(tag, [])
+    _extension_tags[tag].append(extension)
 
 def _build_action(action):
     '''Processes a single custom dynamic grammar action.'''

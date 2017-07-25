@@ -277,24 +277,41 @@ def get_active_window():
         tell application "System Events"
             set frontApp to first application process whose frontmost is true
             set frontAppName to name of frontApp
-            tell process frontAppName
-                set mainWindow to missing value
-                repeat with win in windows
-                    if attribute "AXMain" of win is true then
-                        set mainWindow to win
-                        exit repeat
-                    end if
-                end repeat
-                if mainWindow is missing value then
-                    tell application "System Events"
-                        set windowTitle to name of first window of process frontAppName
-                    end tell
-                else
-                    tell mainWindow
-                        set windowTitle to value of attribute "AXMain"
-                    end tell
-                end if
-            end tell
+
+            if frontAppName is "WinAppHelper" then
+                set windowTitle to title of frontApp
+            else
+                tell process frontAppName
+                    log frontAppName
+                    try
+                        if frontAppName is "Google Chrome" then
+                            tell (1st window whose focused is true)
+                                set windowTitle to title
+                            end tell
+                        else
+                            set mainWindow to missing value
+                            repeat with win in windows
+                                if attribute "AXMain" of win is true then
+                                    set mainWindow to win
+                                    exit repeat
+                                end if
+                            end repeat
+                            if mainWindow is missing value then
+                                tell application "System Events"
+                                    set windowTitle to name of first window of process frontAppName
+                                end tell
+                            else
+                                tell mainWindow
+                                    set windowTitle to value of attribute "AXMain"
+                                end tell
+                            end if
+                        end if
+                    on error message
+                        log message
+                    end try
+                end tell
+            end
+
         end tell
 
         return {frontAppName, windowTitle}
@@ -310,14 +327,16 @@ def get_active_window():
 
 def map_window_properties(properties):
     p = {}
-    for key in properties:
-        short_key = re.match(r".*\('(.*)'\).*", str(key))  # is there a better
-        # way to access keys that are instances?
-        p[str(short_key.group(1))] = properties[key]
 
-    p2 = {}
-    p2['posn'] = eval(str(p['posn']))
-    p2['ptsz'] = eval(str(p['ptsz']))
+    if properties:
+        for key in properties:
+            short_key = re.match(r".*\('(.*)'\).*", str(key))  # is there a better
+            # way to access keys that are instances?
+            p[str(short_key.group(1))] = properties[key]
+
+        p['posn'] = eval(str(p['posn']))
+        p['ptsz'] = eval(str(p['ptsz']))
+
 
     return p2
 
@@ -336,13 +355,22 @@ def get_window_properties(window_id=None):
     if window_id is None:
         window_id, _ = get_active_window()
 
-    cmd = '''tell application "System Events" to tell application process "%s"
-        try
-            get properties of window 1
-        on error errmess
-            log errmess
-        end try
-    end tell
+    if window_id is "WinAppHelper":
+        return {}
+
+    cmd = '''
+        set frontAppName to "%s" 
+        tell application "System Events" to tell application process frontAppName
+            try
+                if frontAppName is "Google Chrome" then
+                    get properties of 1st window whose focused is true
+                else
+                    get properties of window 1
+                end if
+            on error errmess
+                log errmess
+            end try
+        end tell
     ''' % window_id
     script = applescript.AppleScript(cmd)
     properties = script.run()
@@ -357,8 +385,9 @@ def get_context():
 
     window_id, window_title = get_active_window()
     properties = get_window_properties(window_id)
-    properties['id'] = window_id
-    properties['title'] = window_title
+    properties['executable'] = str(window_id)
+    properties['title'] = str(window_title)
+    logging.debug(window_title)
 
     # Types in 'breaking' throw an exception in jsonrpclib, so
     # they need to be converted to strings.
@@ -406,9 +435,9 @@ def key_press(
                          key=key))
 
     if count_delay is None or count < 2:
-        delay = ''
+        delay = 'delay 0.01'
     else:
-        delay = 'delay %0.2f ' % count_delay
+        delay = 'delay %f ' % count_delay
 
     if modifiers and hasattr(modifiers, 'lower'):
         modifiers = [modifiers]
@@ -427,6 +456,8 @@ def key_press(
             command = 'keystroke "{0}"'.format(key_to_press)
         elif not key_to_press:
             key_to_press = _KEYCODE_TRANSLATION.get(key.lower(), None)
+            if len(key) == 1 and key.lower() != key:
+                modifiers.append('shift')
             command = 'key code "{0}"'.format(key_to_press)
 
     if key_to_press is None:
@@ -437,6 +468,10 @@ def key_press(
         key_command = "%s using {%s} " % (command, ', '.join(elems))
     else:
         key_command = command
+
+    execute_key_command(key_command, count=count, delay=delay)
+
+def execute_key_command(key_command, count=1, delay=''):
 
     script = applescript.AppleScript('''
     tell application "System Events"
@@ -458,8 +493,14 @@ def write_text(text, paste=False):
     '''send text formatted exactly as written to active window.  will use
        pbpaste clipboard to paste the text instead of typing it.'''
 
-    logging.debug("text = %s paste = %s" % (text, paste))
-    if text:
+    logging.debug("text = '%s' paste = %s" % (text, paste))
+
+    if not text:
+        return
+
+    # paste = False
+
+    if paste:
         # get current clipboard contents
         pb = NSPasteboard.generalPasteboard()
         classes = NSArray.arrayWithObject_(objc.lookUpClass('NSString'))
@@ -472,12 +513,22 @@ def write_text(text, paste=False):
         pb.writeObjects_(a)
 
         # paste
-        key_press('v', 'super')
+        window_id, window_title = get_active_window()
+        if 'Sublime' in window_id:
+            key_press('v', ('super', 'shift'))
+        else:
+            key_press('v', 'super')
+
         pause(500)
 
         # return original text to clipboard
         pb.clearContents()
         pb.writeObjects_(items)
+
+    else:
+        for c in text:
+            key_command = 'keystroke "{0}"'.format(c)
+            execute_key_command(key_command)
 
 
 def mouseEvent(type, posx, posy, clickCount=1):
@@ -515,16 +566,19 @@ def trigger_mouseclick(button, direction, posx, posy, clickCount=1):
     	if currentpos.x > geo['x'] + geo['width'] - 25:
     		newPos.x = geo['x'] + geo['width'] - 25
     		needMove = True
+        if currentpos.x < geo['x'] + geo['width'] - 50:
+            newPos.x = geo['x'] + geo['width'] - 50
+            needMove = True
     	if currentpos.y < geo['y'] + 100:
     		newPos.y = geo['y'] + 100
     		needMove = True
-    	if currentpos.y > geo['y'] + geo['height'] - 100:
-    		newPos.y = geo['y'] + geo['height'] - 100
+    	if currentpos.y > geo['y'] + geo['height'] - 200:
+    		newPos.y = geo['y'] + geo['height'] - 200
     		needMove = True
 
-    	if needMove:
-    		mousemove(newPos.x, newPos.y)
-    		time.sleep(0.05)
+    	# if needMove:
+    	# 	mousemove(newPos.x, newPos.y)
+    	# 	time.sleep(0.05)
 
     	speed = 2
     	window_id, window_title = get_active_window()
@@ -618,14 +672,45 @@ def pause(amount):
 def bring_app(window_title):
     '''Returns the window id and title of the active window.'''
 
-    print "Bringing app %s" % window_title
+    print "Bringing app %s." % window_title
 
-    script = applescript.AppleScript('''
-        tell application "{window_title}"
-            reopen
-            activate
-        end tell
-    '''.format(window_title=window_title))
+    if window_title == 'Jingyi Wei':
+        script = applescript.AppleScript('''
+            tell application "System Events"
+                tell application process "Google Chrome"
+                    1st window whose title is "Jingyi Wei"
+                    tell (1st window whose title is "Jingyi Wei")
+                        click
+                        activate
+                        try
+                            set miniaturized to false -- most apps
+                        end try
+                        try
+                            set collapsed to false -- Finder
+                        end try
+                        try
+                            tell (1st button whose help is "Collapse")
+                                click
+                            end tell
+                        end try
+                        try
+                            tell (1st button whose help is "Expand")
+                                click
+                            end tell
+                        end try
+                    end tell
+                end tell
+            end tell
+        ''')
+
+    else:
+        script = applescript.AppleScript('''
+            tell application "{window_title}"
+                reopen
+                activate
+            end tell
+        '''.format(window_title=window_title))
+
     script.run()
 
 

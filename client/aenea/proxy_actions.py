@@ -140,6 +140,13 @@ class ProxyText(ProxyBase, dragonfly.DynStrActionBase):
     def _execute_events(self, events):
         aenea.communications.server.write_text(text=events)
 
+class ProxyPasteText(ProxyBase, dragonfly.DynStrActionBase):
+    def _parse_spec(self, spec):
+        return spec
+
+    def _execute_events(self, events):
+        aenea.communications.server.write_text(text=events, paste = True)
+
 ###############################################################################
 # Notification
 
@@ -240,6 +247,7 @@ class ProxyBringApp(ProxyBase, dragonfly.DynStrActionBase):
 __all__ = [
     'ProxyKey',
     'ProxyText',
+    'ProxyPasteText',
     'ProxyMouse',
     'ProxyMousePhantomClick',
     'ProxyBringApp'

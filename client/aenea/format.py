@@ -22,6 +22,8 @@ def format_snakeword(text):
     formatted += format_score(text[1:])
     return formatted
 
+def format_snake(text):
+    return '_'.join(text)
 
 def format_score(text):
     return '_'.join(text)
@@ -31,7 +33,7 @@ def format_camel(text):
     return text[0] + ''.join([word[0].upper() + word[1:] for word in text[1:]])
 
 
-def format_proper(text):
+def format_titan(text):
     return ''.join(word.capitalize() for word in text)
 
 
