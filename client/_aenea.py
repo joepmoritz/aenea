@@ -46,11 +46,11 @@ print '\tPLATFORM:', aenea.config.PLATFORM
 print '\tUSE_MULTIPLE_ACTIONS:', aenea.config.USE_MULTIPLE_ACTIONS
 print '\tSCREEN_RESOLUTION:', aenea.config.SCREEN_RESOLUTION
 
-try:
-    aenea.proxy_contexts._get_context()
-    print 'Aenea: Successfully connected to server.'
-except:
-    print 'Aenea: Unable to connect to server.'
+# try:
+#     aenea.proxy_contexts._get_context()
+#     print 'Aenea: Successfully connected to server.'
+# except:
+#     print 'Aenea: Unable to connect to server.'
 
 
 # Commands that can be rebound.
@@ -58,7 +58,7 @@ command_table = [
     'set proxy server to <proxy>',
     'disable proxy server',
     'enable proxy server',
-    'force natlink to reload all grammars'
+    'force natlink reload'
     ]
 command_table = aenea.configuration.make_grammar_commands(
     'aenea',
@@ -90,7 +90,7 @@ class EnableRule(dragonfly.CompoundRule):
 def reload_code():
     # Do not reload anything in these directories or their subdirectories.
     dir_reload_blacklist = set(["core"])
-    macro_dir = "C:\\NatLink\\NatLink\\MacroSystem"
+    macro_dir = "C:\\NatLink\\NatLink\\DragonflyMacros"
 
     # Unload all grammars.
     natlinkmain.unloadEverything()
@@ -132,7 +132,7 @@ def reload_code():
 # also unloads all modules and packages in the macro directory so that they will
 # be reloaded the next time that they are imported.  It even reloads Aenea!
 class ReloadGrammarsRule(dragonfly.MappingRule):
-    mapping = {command_table['force natlink to reload all grammars']: dragonfly.Function(reload_code)}
+    mapping = {command_table['force natlink reload']: dragonfly.Function(reload_code)}
 
 server_list = dragonfly.DictList('aenea servers')
 server_list_watcher = aenea.configuration.ConfigWatcher(
@@ -154,10 +154,10 @@ class ChangeServer(dragonfly.CompoundRule):
 
 grammar = dragonfly.Grammar('aenea')
 
-grammar.add_rule(EnableRule())
-grammar.add_rule(DisableRule())
+# grammar.add_rule(EnableRule())
+# grammar.add_rule(DisableRule())
 grammar.add_rule(ReloadGrammarsRule())
-grammar.add_rule(ChangeServer())
+# grammar.add_rule(ChangeServer())
 
 grammar.load()
 
