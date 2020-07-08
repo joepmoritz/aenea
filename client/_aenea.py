@@ -90,7 +90,8 @@ class EnableRule(dragonfly.CompoundRule):
 def reload_code():
     # Do not reload anything in these directories or their subdirectories.
     dir_reload_blacklist = set(["core"])
-    macro_dir = "C:\\NatLink\\NatLink\\DragonflyMacros"
+    macro_dir = aenea.config.STARTING_PROJECT_ROOT
+    # macro_dir = "C:\\NatLink\\NatLink\\DragonflyMacros"
 
     # Unload all grammars.
     natlinkmain.unloadEverything()

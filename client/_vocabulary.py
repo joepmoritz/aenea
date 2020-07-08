@@ -30,8 +30,8 @@ vocabulary_list = aenea.vocabulary.register_list_of_dynamic_vocabularies()
 # Commands that can be rebound.
 command_table = [
     '[refresh|reload] dynamic [vocabulary|vocabularies]',
-    'enable vocabulary <vocabulary>',
-    'disable vocabulary <vocabulary>',
+    'load vocab <vocabulary>',
+    'unload vocab <vocabulary>',
     '<static>',
     '<dynamic>'
     ]
@@ -55,7 +55,7 @@ class RefreshRule(dragonfly.CompoundRule):
 
 
 class EnableRule(dragonfly.CompoundRule):
-    spec = command_table['enable vocabulary <vocabulary>']
+    spec = command_table['load vocab <vocabulary>']
     extras = [dragonfly.ListRef('vocabulary', vocabulary_list)]
 
     def _process_recognition(self, node, extras):
@@ -63,7 +63,7 @@ class EnableRule(dragonfly.CompoundRule):
 
 
 class DisableRule(dragonfly.CompoundRule):
-    spec = command_table['disable vocabulary <vocabulary>']
+    spec = command_table['unload vocab <vocabulary>']
     extras = [dragonfly.ListRef('vocabulary', vocabulary_list)]
 
     def _process_recognition(self, node, extras):

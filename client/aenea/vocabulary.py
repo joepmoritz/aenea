@@ -18,17 +18,31 @@
 '''The vocabulary module provides control of dynamic and static
 vocabulary.  These are user-configurable mappings of phrases to
 actions that can be dynamically updated and en/dis-abled on demand,
-and shared across modules.'''
+and shared across modules.
 
-from aenea.lax import (
-    Text,
-    Key
-    )
 
+_vocabulary holds whatever is loaded from JSON,
+but with shortcuts/text changed to dragonfly functions
+
+_lists holds result of merging and tag checking of _vocabulary items.
+This means it depends on active window title/exe.
+Dynamic updates every time you speak, static only when you change JSON.
+This means the word list is cleared and every word re-added every time,
+all the way down to Dragon.
+
+Optimization: clear dynamic _lists when JSON changes, but not when you speak.
+Instead, rebuild the list in a temp var, then compare the keys (values not needed)
+If any removed, clear list and update all. If any added, only add those keys.
+
+Alternative opt: only update _lists when win title/exe changes
+
+
+'''
+
+from dragonfly import Key, Text, Pause, Mimic
 from wrappers import NoAction
 
 from aenea.proxy_actions import ProxyMousePhantomClick as MousePhantomClick
-import aenea.proxy_contexts
 
 try:
     import dragonfly
@@ -95,7 +109,26 @@ _watchers = {
 
 _enabled_watcher = aenea.configuration.ConfigWatcher(('vocabulary_config', 'enabled'))
 
-_extension_tags = {}
+_window_title_tags = {}
+_window_executable_tags = {}
+_last_window_title_tags = set()
+_last_window_executable_tags = set()
+
+
+def get_window_title_tags(win):
+    for tag, texts in _window_title_tags.iteritems():
+        if any(text.lower() in win.title.lower() for text in texts):
+            yield tag
+    
+def get_window_executable_tags(win):
+    for tag, texts in _window_executable_tags.iteritems():
+        if any(text.lower() in win.executable.lower() for text in texts):
+            yield tag
+
+def window_tags_have_changed():
+    win = aenea.config.get_window_foreground()
+    return (_last_window_title_tags != set(get_window_title_tags(win))
+        or _last_window_executable_tags != set(get_window_executable_tags(win)))
 
 
 def refresh_vocabulary(force_reload=False):
@@ -111,16 +144,20 @@ def refresh_vocabulary(force_reload=False):
        starts to say anything.'''
     global _vocabulary
 
-    if force_reload or any(w.refresh() for w in _watchers.itervalues()):
+    vocabularies_have_changed = any(w.refresh() for w in _watchers.itervalues())
+
+    if force_reload or vocabularies_have_changed:
         for vocabulary in 'static', 'dynamic':
             for kind in _vocabulary[vocabulary].itervalues():
                 del kind[:]
 
             for (fn, watcher) in _watchers[vocabulary].files.iteritems():
+                watcher.refresh()
                 vox = watcher.conf
                 if isinstance(vox, dict):
                     vox = [vox]
                 for v in vox:
+                    print('reloading vocabulary %s' % v['name'])
                     _update_one_vocabulary(
                         vocabulary,
                         v['name'],
@@ -131,7 +168,9 @@ def refresh_vocabulary(force_reload=False):
             _rebuild_lists('static')
 
     _load_enabled_from_disk()
-    _rebuild_lists('dynamic')
+
+    if window_tags_have_changed() or force_reload or vocabularies_have_changed:
+        _rebuild_lists('dynamic')
 
 
 def _load_enabled_from_disk():
@@ -159,18 +198,21 @@ def _rebuild_lists(vocabulary):
     global _lists
     global _vocabulary_inhibitions
     global _list_of_dynamic_vocabularies
+    global _last_window_title_tags, _last_window_executable_tags
+
+    win = aenea.config.get_window_foreground()
 
     if vocabulary == 'dynamic':
+        # print "rebuilding lists dynamic %s" % win.title
         if _global_list is not None:
             _global_list.clear()
 
     for t, dlist in _lists[vocabulary].iteritems():
         if dlist:
             dlist.clear()
-    win = aenea.config.get_window_foreground()
-    context = aenea.proxy_contexts._get_context()
-    has_any_extension_tag = False
-    has_correct_extension_tag = False
+
+    _last_window_title_tags = set(get_window_title_tags(win))
+    _last_window_executable_tags = set(get_window_executable_tags(win))
 
     for name, vocabs in _vocabulary[vocabulary].iteritems():
         for (tags, vocab) in vocabs:
@@ -185,15 +227,22 @@ def _rebuild_lists(vocabulary):
                     if not global_inhibited:
                         _global_list.update(vocab)
 
-                has_any_extension_tag = any([tag in _extension_tags for tag in tags])
-                has_correct_extension_tag = any([
-                    extension_tag.lower() in context['title'].lower()
-                    for tag in tags if tag in _extension_tags
-                    for extension_tag in _extension_tags[tag]
-                ])
+                has_any_window_title_tag = any([tag in _window_title_tags for tag in tags])
+                has_any_executable_tag = any([tag in _window_executable_tags for tag in tags])
 
-                if has_any_extension_tag and not has_correct_extension_tag:
-                    # print('Vocab %s does not have correct extension given %s' % (name, context['title'].lower()))
+                has_correct_window_title_tag = all(
+                    any(window_title_tag in win.title for window_title_tag in _window_title_tags[tag])
+                    for tag in tags if tag in _window_title_tags
+                )
+
+                has_correct_executable_tag = any(
+                    executable_tag.lower() in win.executable.lower()
+                    for tag in tags if tag in _window_executable_tags
+                    for executable_tag in _window_executable_tags[tag]
+                )
+
+                if (has_any_window_title_tag or has_any_executable_tag) and not (has_correct_window_title_tag or has_correct_executable_tag):
+                    # print('Vocab %s does not have correct window_title given %s' % (name, win.title))
                     break
 
                 for tag in tags:
@@ -205,6 +254,7 @@ def _rebuild_lists(vocabulary):
                     # print('Loading vocab %s for tag %s' % (name, tag))
                     if tag in _lists[vocabulary]:
                         _lists[vocabulary][tag].update(vocab)
+
 
     if _list_of_dynamic_vocabularies is not None:
         _list_of_dynamic_vocabularies.set(_vocabulary['dynamic'])
@@ -324,9 +374,13 @@ def unregister_list_of_dynamic_vocabularies():
     global _list_of_dynamic_vocabularies
     _list_of_dynamic_vocabularies = None
 
-def add_extension_tag(extension, tag):
-    _extension_tags.setdefault(tag, [])
-    _extension_tags[tag].append(extension)
+def add_window_title_tag(window_title, tag):
+    _window_title_tags.setdefault(tag, [])
+    _window_title_tags[tag].append(window_title)
+
+def add_window_executable_tag(window_executable, tag):
+    _window_executable_tags.setdefault(tag, [])
+    _window_executable_tags[tag].append(window_executable)
 
 def _build_action(action):
     '''Processes a single custom dynamic grammar action.'''
@@ -359,3 +413,4 @@ def _update_one_vocabulary(vocabulary, name, tags, vocab, shortcuts):
                 this_chunk[str(phrase)] = _build_action_list(command)
     _vocabulary[vocabulary].setdefault(str(name), [])
     _vocabulary[vocabulary][str(name)].append((map(str, tags), this_chunk))
+

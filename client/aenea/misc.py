@@ -31,7 +31,7 @@ LOWERCASE_LETTERS = configuration.make_grammar_commands('misc', {
     'dell': 'd',
     'etch': 'e',
     'fomp': 'f',
-    'goof': 'g',
+    'golf': 'g',
     'hark': 'h',
     'ice': 'i',
     'jinx': 'j',
@@ -69,7 +69,7 @@ DIGITS = configuration.make_grammar_commands('misc', {
     'nine': '9'
     }, 'digits')
 
-SYMBOLS = configuration.make_grammar_commands('misc', {
+SYMBOLS = {
     "ampersand": "ampersand",
     "(slash | divided [by])": "slash",
     "at sign": "at",
@@ -79,30 +79,36 @@ SYMBOLS = configuration.make_grammar_commands('misc', {
     "pipe": "bar",
     "plus": "plus",
     "dollar": "dollar",
-    "dot": "dot",
+    "dork": "dot",
     "comma": "comma",
     "eke": "equal",
     "caret": "caret",
     "minus | dash": "hyphen",
     "percy": "percent",
-    "hash | pound": "hash",
+    "hash | pound": "s-3",
     "question [mark] | quest": "question",
-    "double quote | quote": "dquote",
-    "underscore | under": "underscore",
+    "(single | one) quote": "dquote",
+    "quote": "dquote,dquote,left",
+    "under": "underscore",
     "semicolon | semi": "semicolon",
-    "single quote | smote": "squote",
-    "asterisk | star | times": "asterisk",
+    "(single | one) smote": "squote",
+    "smote": "squote,squote,left",
+    "star | times": "asterisk",
     "tilde": "tilde",
     "colon": "colon",
-    "right parenthesis | right parents | right pars": "rparen",
-    "left parenthesis | left parents | left pars | pars | parents": "lparen",
-    "left brace | brace": "lbrace",
+    "right pax": "rparen",
+    "left pax": "lparen",
+    "pax": "lparen,rparen,left",
+    "left brace": "lbrace",
     "right brace": "rbrace",
-    "left bracket | bracket": "lbracket",
+    "braces": "lbrace,rbrace,left",
+    "left bracket": "lbracket",
     "right bracket": "rbracket",
-    "left angle | angle | langle": "langle",
+    "brax": "lbracket,rbracket,left",
+    "left angle | langle": "langle",
     "right angle | rangle": "rangle",
-    }, 'symbols')
+    "angles": "langle,rangle,left",
+}
 
 
 

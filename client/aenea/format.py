@@ -30,7 +30,7 @@ def format_score(text):
 
 
 def format_camel(text):
-    return text[0] + ''.join([word[0].upper() + word[1:] for word in text[1:]])
+    return text[0][0].lower() + text[0][1:] + ''.join([word[0].upper() + word[1:] for word in text[1:]])
 
 
 def format_titan(text):
